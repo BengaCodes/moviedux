@@ -1,23 +1,81 @@
-import { useEffect, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import MovieCard, { Movies } from './MovieCard'
 import axios from 'axios'
+import Input from './Input'
+import Select from './Select'
 
 const MoviesGrid = () => {
   const [movies, setMovies] = useState<Movies[]>([])
+  const [filteredMovies, setFilteredMovies] = useState<Movies[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [genre, setGenre] = useState('All Genres')
+  const [rating, setRating] = useState('All Ratings')
 
   useEffect(() => {
     loadMovies()
-  }, [])
+    if (searchTerm && movies.length) {
+      setFilteredMovies(() => {
+        const filteredMovies = movies.filter((movie) =>
+          movie.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        return filteredMovies
+      })
+    }
+    if (genre === 'All Genres') {
+      setFilteredMovies(movies)
+    }
+  }, [searchTerm, movies.length, genre])
+
+  useEffect(() => {
+    if (genre !== 'All Genres' && !filteredMovies.length) {
+      setFilteredMovies(() => {
+        const filteredMovies = movies.filter((movie) => movie.genre === genre)
+        return filteredMovies
+      })
+    } else if (genre !== 'All Genres' && filteredMovies.length) {
+      setFilteredMovies((prevMovies) => {
+        const filteredMovies = prevMovies.filter(
+          (movie) => movie.genre === genre
+        )
+        return filteredMovies
+      })
+    }
+    if (rating !== 'All Ratings' && !filteredMovies.length) {
+      setFilteredMovies(() => {
+        const filteredMovies = movies.filter((movie) => movie.rating === rating)
+        return filteredMovies
+      })
+    } else if (rating !== 'All Ratings' && filteredMovies.length) {
+      setFilteredMovies((prevMovies) => {
+        const filteredMovies = prevMovies.filter(
+          (movie) => movie.rating === rating
+        )
+        return filteredMovies
+      })
+    }
+  }, [genre, rating, filteredMovies.length])
 
   const loadMovies = async () => {
     try {
       const res = await axios.get('/data/movies.json')
       const data = res?.data as Movies[]
-      console.log({ data })
       setMovies(data)
+      setFilteredMovies(data)
     } catch (error) {
       throw new Error(`There was an error fetching movies: ${error}`)
     }
+  }
+
+  const handleMovieSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+  }
+
+  const handleGenreFilter = (e: ChangeEvent<HTMLSelectElement>) => {
+    setGenre(e.target.value)
+  }
+
+  const handleRatingFilter = (e: ChangeEvent<HTMLSelectElement>) => {
+    setRating(e.target.value)
   }
 
   if (!movies.length) {
@@ -29,11 +87,66 @@ const MoviesGrid = () => {
     )
   }
 
+  const genreOptions = movies.map((movie) => ({
+    value: movie.genre,
+    option: movie.genre
+  }))
+  const uniqueGenreOptions = new Set(
+    genreOptions.map((option) => JSON.stringify(option))
+  )
+  const outputGenreOptions = Array.from(uniqueGenreOptions).map((option) =>
+    JSON.parse(option)
+  )
+
+  const ratingOptions = movies.map((movie) => ({
+    value: movie.rating,
+    option: movie.rating
+  }))
+  const uniqueRatingOptions = new Set(
+    ratingOptions.map((option) => JSON.stringify(option))
+  )
+  const outputRatingOptions = Array.from(uniqueRatingOptions).map((option) =>
+    JSON.parse(option)
+  )
+
   return (
-    <div className='movies-grid'>
-      {movies?.map((movie) => (
-        <MovieCard key={movie.id} movie={movie} />
-      ))}
+    <div>
+      <Input
+        label='Search Movies'
+        id='movies'
+        type='text'
+        onChange={handleMovieSearch}
+        value={searchTerm}
+      />
+
+      <div className='filter-bar'>
+        <div className='filter-slot'>
+          <Select
+            options={outputGenreOptions}
+            label='Genre'
+            id='genre'
+            value={genre}
+            onChange={handleGenreFilter}
+            defaultOption='All Genres'
+          />
+        </div>
+        <div className='filter-slot'>
+          <Select
+            options={outputRatingOptions}
+            label='Rating'
+            id='ratings'
+            value={rating}
+            onChange={handleRatingFilter}
+            defaultOption='All Ratings'
+          />
+        </div>
+      </div>
+
+      <div className='movies-grid'>
+        {filteredMovies?.map((movie) => (
+          <MovieCard key={movie.id} movie={movie} />
+        ))}
+      </div>
     </div>
   )
 }
