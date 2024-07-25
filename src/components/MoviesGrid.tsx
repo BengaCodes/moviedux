@@ -1,18 +1,20 @@
 import { ChangeEvent, useEffect, useState } from 'react'
 import MovieCard, { Movies } from './MovieCard'
-import axios from 'axios'
 import Input from './Input'
 import Select from './Select'
 
-const MoviesGrid = () => {
-  const [movies, setMovies] = useState<Movies[]>([])
+type MoviesGridProps = {
+  movies: Movies[]
+  toggleWatchlist: (movie: Movies) => void
+}
+
+const MoviesGrid = ({ movies, toggleWatchlist }: MoviesGridProps) => {
   const [filteredMovies, setFilteredMovies] = useState<Movies[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [genre, setGenre] = useState('All Genres')
   const [rating, setRating] = useState('All Ratings')
 
   useEffect(() => {
-    loadMovies()
     if (searchTerm && movies.length) {
       setFilteredMovies(() => {
         const filteredMovies = movies.filter((movie) =>
@@ -54,17 +56,6 @@ const MoviesGrid = () => {
       })
     }
   }, [genre, rating, filteredMovies.length])
-
-  const loadMovies = async () => {
-    try {
-      const res = await axios.get('/data/movies.json')
-      const data = res?.data as Movies[]
-      setMovies(data)
-      setFilteredMovies(data)
-    } catch (error) {
-      throw new Error(`There was an error fetching movies: ${error}`)
-    }
-  }
 
   const handleMovieSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value)
@@ -144,7 +135,11 @@ const MoviesGrid = () => {
 
       <div className='movies-grid'>
         {filteredMovies?.map((movie) => (
-          <MovieCard key={movie.id} movie={movie} />
+          <MovieCard
+            key={movie.id}
+            movie={movie}
+            toggleWatchlist={toggleWatchlist}
+          />
         ))}
       </div>
     </div>

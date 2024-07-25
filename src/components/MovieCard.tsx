@@ -1,4 +1,5 @@
 import { SyntheticEvent } from 'react'
+import Input from './Input'
 
 export type Movies = {
   id: number
@@ -6,13 +7,15 @@ export type Movies = {
   image: string
   genre: string
   rating: string
+  isWatchlist: boolean
 }
 
 export type MovieCardProps = {
   movie: Movies
+  toggleWatchlist: (movie: Movies) => void
 }
 
-const MovieCard = ({ movie }: MovieCardProps) => {
+const MovieCard = ({ movie, toggleWatchlist }: MovieCardProps) => {
   const handleImageError = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     const target = e.target as HTMLImageElement
     target.src = 'images/default.jpg'
@@ -31,7 +34,11 @@ const MovieCard = ({ movie }: MovieCardProps) => {
   }
 
   return (
-    <div className='movie-card'>
+    <div
+      className='movie-card'
+      onClick={() => toggleWatchlist(movie)}
+      style={{ cursor: 'pointer' }}
+    >
       <img
         src={`images/${movie?.image}`}
         alt={movie?.title}
@@ -39,10 +46,27 @@ const MovieCard = ({ movie }: MovieCardProps) => {
       />
       <div className='movie-card-info'>
         <h3 className='movie-card-title'>{movie?.title}</h3>
-        <p className='movie-card-genre'>{movie?.genre}</p>
-        <p className={`movie-card-rating ${getRatingClass(movie?.rating)}`}>
-          {movie?.rating}
-        </p>
+        <div>
+          <span className='movie-card-genre'>{movie?.genre}</span>
+          <span
+            className={`movie-card-rating ${getRatingClass(movie?.rating)}`}
+          >
+            {movie?.rating}
+          </span>
+        </div>
+        <label className='switch'>
+          <Input
+            type='checkbox'
+            label=''
+            id='watchlist'
+            checked={movie?.isWatchlist}
+          />
+          <span className='slider'>
+            <span className='slider-label'>
+              {movie?.isWatchlist ? 'In Watchlist' : 'Add to watchlist'}
+            </span>
+          </span>
+        </label>
       </div>
     </div>
   )
